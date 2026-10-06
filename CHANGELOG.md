@@ -36,13 +36,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Future Versions
 
 ### Planned for v1.1.0
-- [ ] GitHub Actions CI/CD workflow example
 - [ ] Database seeding examples
 - [ ] Test factory setup (Factory Bot)
-- [ ] API documentation support
-- [ ] Development gems like byebug/pry configuration
 
 ### Under consideration
+- [ ] GitHub Actions CI/CD workflow example
+- [ ] API documentation support
+- [ ] Development gems like byebug/pry configuration
 - [ ] Docker image for Rails app itself
 - [ ] Sidekiq for background jobs
 - [ ] Redis configuration
