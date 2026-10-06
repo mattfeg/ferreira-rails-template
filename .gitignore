@@ -1,0 +1,31 @@
+# Test apps created for development
+test_app/
+testapp/
+tmp/
+
+# Environment files
+.env.local
+.env*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Ruby
+*.gem
+*.rbc
+.ruby-version
+.bundle/
+vendor/bundle/
+
+# Logs
+*.log
+log/
+
+# Coverage
+coverage/
+.resultset.json
