@@ -137,24 +137,25 @@ after_bundle do
   # =========================================================================
 
   run 'mkdir -p spec/factories'
-
+  
+  run 'rm -f spec/factories/users.rb'
   create_file 'spec/factories/.keep'
 
   # =========================================================================
   # Create User Factory
   # =========================================================================
 
-  # create_file 'spec/factories/users.rb' do
-  #   <<~RUBY
-  #     FactoryBot.define do
-  #       factory :user do
-  #         email { Faker::Internet.unique.email }
-  #         password { 'Password123!' }
-  #         password_confirmation { 'Password123!' }
-  #       end
-  #     end
-  #   RUBY
-  # end
+  create_file 'spec/factories/users.rb' do
+    <<~RUBY
+      FactoryBot.define do
+        factory :user do
+          email { Faker::Internet.unique.email }
+          password { 'Password123!' }
+          password_confirmation { 'Password123!' }
+        end
+      end
+    RUBY
+  end
   
   # =========================================================================
   # Setup Devise for Authentication
