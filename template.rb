@@ -135,17 +135,34 @@ after_bundle do
   # =========================================================================
   # Create Factory Bot directory structure
   # =========================================================================
-  
+
   run 'mkdir -p spec/factories'
-  
+
   create_file 'spec/factories/.keep'
+
+  # =========================================================================
+  # Create User Factory
+  # =========================================================================
+
+  create_file 'spec/factories/users.rb' do
+    <<~RUBY
+      FactoryBot.define do
+        factory :user do
+          email { Faker::Internet.unique.email }
+          password { 'Password123!' }
+          password_confirmation { 'Password123!' }
+        end
+      end
+    RUBY
+  end
   
   # =========================================================================
   # Setup Devise for Authentication
   # =========================================================================
-  
+
   generate 'devise:install'
-  
+  generate 'devise', 'User'
+
   # =========================================================================
   # Setup Pundit for Authorization
   # =========================================================================
@@ -238,10 +255,12 @@ after_bundle do
   say "  6. bin/dev (run Rails + Tailwind)"
   say "  7. Visit http://localhost:3000"
   say "  8. Emails automatically open in /letter_opener"
+  say "  9. User model with Devise authentication is ready to use!"
   
   say "\n📝 Configurations:"
   say "  • Docker Compose with PostgreSQL 16 (docker-compose.yml)"
-  say "  • Devise installed (create models as needed)"
+  say "  • Devise installed with User model"
+  say "  • User factory created for testing"
   say "  • Pundit installed with ApplicationPolicy template"
   say "  • RSpec configured with Shoulda Matchers"
   say "  • SimpleCov for test coverage (coverage/)"
