@@ -265,7 +265,6 @@ after_bundle do
   # =========================================================================
   # Initialize Git Repository
   # =========================================================================
-
   git add: '.'
   git commit: %Q{ -m 'Initial commit: Rails app with Devise, Pundit, RSpec, Tailwind CSS' }
 

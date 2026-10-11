@@ -5,7 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.0] - 2025-10-06
+## [1.0.3] - 2026-10-11
+
+### Added
+- Use only .env as dotenv file, instead of using .env.local for local dev.
+
+### Removed
+- Removes devise model generation.
+
+### Fixed
+- Fix injection dotenv code on .env file.
+- Fix injection of yml code on github workflow file.
+
+## [1.0.0] - 2026-10-06
 
 ### Added
 - Initial release of Ferreira Rails Template
@@ -35,7 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Future Versions
 
-### Planned for v1.1.0
+### Planned for future
 - [ ] Database seeding examples
 - [ ] Test factory setup (Factory Bot)
 
