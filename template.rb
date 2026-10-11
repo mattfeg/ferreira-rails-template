@@ -1,5 +1,5 @@
 # Ferreira Rails Template
-# Usage: rails new myapp -d postgresql -c tailwind -m https://raw.githubusercontent.com/seu-usuario/ferreira-rails-template/main/template.rb
+# Usage: rails new myapp -d postgresql -c tailwind -m https://raw.githubusercontent.com/mattfeg/ferreira-rails-template/main/template.rb
 # Description: Template with Rspec, Shoulda Matchers, Faker, Devise, Pundit, Dotenv, Letter Opener, SimpleCov
 
 # =============================================================================
@@ -13,8 +13,8 @@ create_file 'docker-compose.yml' do
         image: postgres:16-alpine
         container_name: #{app_name}_postgres
         environment:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: ${DB_USERNAME}
+          POSTGRES_PASSWORD: ${DB_PASSWORD}
           POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
         ports:
           - "5432:5432"
@@ -86,18 +86,11 @@ environment "config.action_mailer.delivery_method = :letter_opener", env: 'devel
 
 after_bundle do
   # =========================================================================
-  # Clean up after Rails 8 auto-generation
-  # =========================================================================
-  
-  # Remove .env file created by Kamal if it exists
-  run 'rm -f .env' if File.exist?('.env')
-  
-  # =========================================================================
   # Setup RSpec with SimpleCov
   # =========================================================================
-  
+
   generate 'rspec:install'
-  
+
   # Configure SimpleCov for code coverage analysis
   inject_into_file 'spec/spec_helper.rb', before: "RSpec.configure do" do
     <<~RUBY
@@ -109,7 +102,7 @@ after_bundle do
 
     RUBY
   end
-  
+
   # Configure Shoulda Matchers for better RSpec assertions
   inject_into_file 'spec/rails_helper.rb', after: "require 'rspec/rails'\n" do
     <<~RUBY
@@ -123,7 +116,7 @@ after_bundle do
       end
     RUBY
   end
-  
+
   # Configure Factory Bot for test data generation
   inject_into_file 'spec/rails_helper.rb', after: "RSpec.configure do |config|\n" do
     <<~RUBY
@@ -131,84 +124,79 @@ after_bundle do
 
     RUBY
   end
-  
+
   # =========================================================================
   # Setup Devise for Authentication
   # =========================================================================
 
   generate 'devise:install'
-  generate 'devise', 'User'
 
   # =========================================================================
   # Setup Pundit for Authorization
   # =========================================================================
-  
+
   generate 'pundit:install'
-  
-  # =========================================================================
-  # Create Factory Bot directory structure
-  # =========================================================================
-
-  run 'mkdir -p spec/factories'
-  
-  run 'rm -f spec/factories/users.rb'
-  create_file 'spec/factories/.keep'
 
   # =========================================================================
-  # Create User Factory
+  # Configure Database Connection via Environment Variables
   # =========================================================================
 
-  create_file 'spec/factories/users.rb' do
-    <<~RUBY
-      FactoryBot.define do
-        factory :user do
-          email { Faker::Internet.unique.email }
-          password { 'Password123!' }
-          password_confirmation { 'Password123!' }
-        end
-      end
-    RUBY
+  # Credentials come from .env (DB_USERNAME / DB_PASSWORD), shared with docker-compose.yml
+  inject_into_file 'config/database.yml', after: "  encoding: unicode\n" do
+    "  host: <%= ENV.fetch('DB_HOST', 'localhost') %>\n" \
+    "  port: <%= ENV.fetch('DB_PORT', 5432) %>\n" \
+    "  username: <%= ENV['DB_USERNAME'] %>\n" \
+    "  password: <%= ENV['DB_PASSWORD'] %>\n"
   end
 
   # =========================================================================
   # Setup Environment Variables
   # =========================================================================
-  
-  create_file '.env.local' do
-    <<~ENV
-      # Database
-      DATABASE_URL=postgresql://postgres:postgres@localhost:5432/#{app_name}_development
 
-      # Mail (Letter Opener)
-      MAIL_HOST=localhost
-      MAIL_PORT=3000
-
-      # Add your environment variables here
-    ENV
+  inject_into_file '.env', after: "RAILS_MASTER_KEY=another-env\n" do
+    "\n" \
+    "# Local database\n" \
+    "DB_HOST=localhost\n" \
+    "DB_PORT=5432\n" \
+    "DB_USERNAME=postgres\n" \
+    "DB_PASSWORD=postgres\n" \
+    "\n" \
+    "# Mail Letter Opener\n" \
+    "MAIL_HOST=localhost\n" \
+    "MAIL_PORT=3000\n" \
+    "\n" \
+    "# Add your environment variables here\n"
   end
-  
+
   create_file '.env.example' do
     <<~ENV
-      # Database
-      DATABASE_URL=postgresql://postgres:postgres@localhost:5432/#{app_name}_development
+      KAMAL_REGISTRY_PASSWORD=
+      RAILS_MASTER_KEY=
 
-      # Mail (Letter Opener)
+      # Local database
+      DB_HOST=localhost
+      DB_PORT=5432
+      DB_USERNAME=
+      DB_PASSWORD=
+
+      # Mail (Letter Opener)MAIL_HOST=localhost
       MAIL_HOST=localhost
       MAIL_PORT=3000
 
       # Add your environment variables here
+
     ENV
   end
-  
+
   # =========================================================================
   # Update .gitignore
   # =========================================================================
-  
+
   append_to_file '.gitignore' do
     <<~GIT
       # Environment variables
-      .env.local
-      .env*.local
+      .env*
+      !/.env.example
 
       # Letter Opener
       tmp/letter_opener/
@@ -218,23 +206,23 @@ after_bundle do
       .resultset.json
     GIT
   end
-  
+
   # =========================================================================
   # Initialize Git Repository
   # =========================================================================
-  
+
   git :init
   git add: '.'
   git commit: %Q{ -m 'Initial commit: Rails app with Devise, Pundit, RSpec, Tailwind CSS' }
-  
+
   # =========================================================================
   # Final Messages
   # =========================================================================
-  
+
   say "\n" + "="*70
   say "✅ Template successfully applied!"
   say "="*70
-  
+
   say "\n📋 Installed Gems:"
   say "  • rspec-rails - Testing framework"
   say "  • shoulda-matchers - RSpec matchers"
@@ -246,7 +234,7 @@ after_bundle do
   say "  • dotenv-rails - Environment variables"
   say "  • letter_opener - Email preview in development"
   say "  • tailwindcss - CSS framework"
-  
+
   say "\n🚀 Next Steps:"
   say "  1. cd #{app_name}"
   say "  2. docker-compose up -d (start PostgreSQL first!)"
@@ -256,23 +244,22 @@ after_bundle do
   say "  6. bin/dev (run Rails + Tailwind)"
   say "  7. Visit http://localhost:3000"
   say "  8. Emails automatically open in /letter_opener"
-  say "  9. User model with Devise authentication is ready to use!"
-  
+  say "  9. Model with Devise authentication must be created!"
+
   say "\n📝 Configurations:"
   say "  • Docker Compose with PostgreSQL 16 (docker-compose.yml)"
-  say "  • Devise installed with User model"
-  say "  • User factory created for testing"
+  say "  • Devise installed"
   say "  • Pundit installed with ApplicationPolicy template"
   say "  • RSpec configured with Shoulda Matchers"
   say "  • SimpleCov for test coverage (coverage/)"
   say "  • PostgreSQL as database"
   say "  • Tailwind CSS ready to use"
   say "  • .env.local and .env.example configured"
-  
+
   say "\n🐳 Docker Commands:"
   say "  docker-compose up -d    # Start PostgreSQL"
   say "  docker-compose down     # Stop PostgreSQL"
   say "  docker-compose logs     # View logs"
-  
+
   say "\n" + "="*70 + "\n"
 end
