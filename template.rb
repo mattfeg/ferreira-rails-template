@@ -159,7 +159,7 @@ after_bundle do
       DB_HOST=localhost
       DB_PORT=5432
       DB_USERNAME=postgres
-      DB_PASSWORD=posgres
+      DB_PASSWORD=
 
       # Mail (Letter Opener)MAIL_HOST=localhost
       MAIL_HOST=localhost
