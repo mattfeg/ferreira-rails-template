@@ -154,18 +154,20 @@ after_bundle do
   # =========================================================================
 
   inject_into_file '.env', after: "RAILS_MASTER_KEY=another-env\n" do
-    "\n" \
-    "# Local database\n" \
-    "DB_HOST=localhost\n" \
-    "DB_PORT=5432\n" \
-    "DB_USERNAME=postgres\n" \
-    "DB_PASSWORD=postgres\n" \
-    "\n" \
-    "# Mail Letter Opener\n" \
-    "MAIL_HOST=localhost\n" \
-    "MAIL_PORT=3000\n" \
-    "\n" \
-    "# Add your environment variables here\n"
+    <<~ENV
+      # Local database
+      DB_HOST=localhost
+      DB_PORT=5432
+      DB_USERNAME=postgres
+      DB_PASSWORD=posgres
+
+      # Mail (Letter Opener)MAIL_HOST=localhost
+      MAIL_HOST=localhost
+      MAIL_PORT=3000
+
+      # Add your environment variables here
+
+    ENV
   end
 
   create_file '.env.example' do
@@ -188,6 +190,53 @@ after_bundle do
     ENV
   end
 
+  inject_into_file '.github/workflows/ci.yml', after: "        run: bin/rubocop -f github\n" do
+    <<-YAML
+
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+      # redis:
+      #   image: valkey/valkey:8
+      #   ports:
+      #     - 6379:6379
+      #   options: --health-cmd "redis-cli ping" --health-interval 10s --health-timeout 5s --health-retries 5
+
+    steps:
+    - name: Install packages
+      run: sudo apt-get update && sudo apt-get install --no-install-recommends -y libpq-dev libvips
+
+    - name: Checkout code
+      uses: actions/checkout@v6
+
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        bundler-cache: true
+
+    - name: Run tests
+      env:
+        RAILS_ENV: test
+        DATABASE_URL: postgres://postgres:postgres@localhost:5432
+        # RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
+        # REDIS_URL: redis://localhost:6379/0
+      run: bin/rails db:test:prepare rspec
+    YAML
+  end
+
   # =========================================================================
   # Update .gitignore
   # =========================================================================
@@ -208,10 +257,15 @@ after_bundle do
   end
 
   # =========================================================================
+  # Run RuboCop Auto-Correct
+  # =========================================================================
+
+  run 'rubocop -A'
+
+  # =========================================================================
   # Initialize Git Repository
   # =========================================================================
 
-  git :init
   git add: '.'
   git commit: %Q{ -m 'Initial commit: Rails app with Devise, Pundit, RSpec, Tailwind CSS' }
 
@@ -240,7 +294,7 @@ after_bundle do
   say "  2. docker-compose up -d (start PostgreSQL first!)"
   say "  3. Wait for PostgreSQL to be ready (check with: docker-compose logs)"
   say "  4. rails db:create db:migrate (create and migrate database)"
-  say "  5. Review .env.local file if needed"
+  say "  5. Review .env file if needed"
   say "  6. bin/dev (run Rails + Tailwind)"
   say "  7. Visit http://localhost:3000"
   say "  8. Emails automatically open in /letter_opener"
@@ -254,7 +308,7 @@ after_bundle do
   say "  • SimpleCov for test coverage (coverage/)"
   say "  • PostgreSQL as database"
   say "  • Tailwind CSS ready to use"
-  say "  • .env.local and .env.example configured"
+  say "  • .env and .env.example configured"
 
   say "\n🐳 Docker Commands:"
   say "  docker-compose up -d    # Start PostgreSQL"
