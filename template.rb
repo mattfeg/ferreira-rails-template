@@ -70,7 +70,7 @@ gem_group :development do
   gem 'letter_opener', '~> 1.10'
 end
 
-gem 'devise', '~> 4.9'
+gem 'devise', '~> 5.0.4'
 gem 'pundit', '~> 2.4'
 
 # =============================================================================
@@ -154,18 +154,19 @@ after_bundle do
   # =========================================================================
 
   inject_into_file '.env', after: "RAILS_MASTER_KEY=another-env\n" do
-    <<~ENV
-      # Local database
-      DB_HOST=localhost
-      DB_PORT=5432
-      DB_USERNAME=postgres
-      DB_PASSWORD=
+    <<-ENV
 
-      # Mail (Letter Opener)MAIL_HOST=localhost
-      MAIL_HOST=localhost
-      MAIL_PORT=3000
+# Local database
+DB_HOST=localhost
+DB_PORT=5432
+DB_USERNAME=postgres
+DB_PASSWORD=
 
-      # Add your environment variables here
+# Mail (Letter Opener)MAIL_HOST=localhost
+MAIL_HOST=localhost
+MAIL_PORT=3000
+
+# Add your environment variables here
 
     ENV
   end
@@ -196,15 +197,25 @@ after_bundle do
   test:
     runs-on: ubuntu-latest
 
-    # services:
-    #  redis:
-    #    image: valkey/valkey:8
-    #    ports:
-    #      - 6379:6379
-    #    options: --health-cmd "redis-cli ping" --health-interval 10s --health-timeout 5s --health-retries 5
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: --health-cmd="pg_isready" --health-interval=10s --health-timeout=5s --health-retries=3
+
+      # redis:
+      #   image: valkey/valkey:8
+      #   ports:
+      #     - 6379:6379
+      #   options: --health-cmd "redis-cli ping" --health-interval 10s --health-timeout 5s --health-retries 5
+
     steps:
       - name: Install packages
-        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y libvips
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y libpq-dev libvips
 
       - name: Checkout code
         uses: actions/checkout@v6
@@ -217,9 +228,10 @@ after_bundle do
       - name: Run tests
         env:
           RAILS_ENV: test
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432
           # RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
           # REDIS_URL: redis://localhost:6379/0
-        run: bin/rails db:test:prepare test
+        run: bin/rails db:test:prepare && bundle exec rspec
     YAML
   end
 
@@ -246,7 +258,7 @@ after_bundle do
   # Run RuboCop Auto-Correct
   # =========================================================================
 
-  run 'rubocop -A'
+  run "rubocop -A"
 
   # =========================================================================
   # Initialize Git Repository
